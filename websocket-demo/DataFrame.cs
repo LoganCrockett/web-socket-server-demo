@@ -4,6 +4,11 @@ using System.Text;
 // Websocket DataFrame
 static class DataFrame
 {
+    public enum Opcode : byte
+    {
+        TEXT = 0b00000001
+    }
+
     /*
      * See the following for good examples of what I'm doing here
      * https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#exchanging_data_frames
@@ -15,8 +20,26 @@ static class DataFrame
         byte[] payloadBytes = Encoding.UTF8.GetBytes(dataToSend);
 
         int messageLength = payloadBytes.Length;
+        byte[] headers = GenerateHeaders(Opcode.TEXT, messageLength);
+        // Set FIN to 1
+        headers[0] = (byte) (headers[0] | 0b10000000);
+
+        //Console.WriteLine(messageLength);
+        //Console.WriteLine(headers[1]);
+
+        //Console.WriteLine("Headers Print");
+        //for (int i = 0; i < headers.Length; i++)
+        //{
+        //    Console.WriteLine(headers[i]);
+        //}
+
+        return combineArrays(headers, payloadBytes);
+    }
+
+    private static byte[] GenerateHeaders(Opcode opcode, int messageLength)
+    {
         byte[] headers = new byte[2];
-        headers[0] = (byte)0b10000001; // Set FIN to 1 and OPTCODE to text
+        headers[0] = (byte)opcode;
 
         if (messageLength < 126)
         {
@@ -30,7 +53,7 @@ static class DataFrame
             {
                 Array.Reverse(payloadLength);
             }
-            
+
             headers = combineArrays(headers, payloadLength);
         }
         else
@@ -45,16 +68,7 @@ static class DataFrame
             headers = combineArrays(headers, payloadLength);
         }
 
-        Console.WriteLine(messageLength);
-        Console.WriteLine(headers[1]);
-
-        Console.WriteLine("Headers Print");
-        for (int i = 0; i < headers.Length; i++)
-        {
-            Console.WriteLine(headers[i]);
-        }
-
-        return combineArrays(headers, payloadBytes);
+        return headers;
     }
 
     private static byte[] combineArrays(byte[] array1, byte[] array2)
