@@ -11,12 +11,12 @@ static class DataFrame
      * https://stackoverflow.com/a/8125509
      * 
      */
-    public static byte[] GeneratePayload(string dataToSend)
+    public static byte[] GeneratePayload(Opcode opcode, string dataToSend)
     {
         byte[] payloadBytes = Encoding.UTF8.GetBytes(dataToSend);
 
         int messageLength = payloadBytes.Length;
-        byte[] headers = GenerateHeaders(Opcode.TEXT, messageLength);
+        byte[] headers = GenerateHeaders(opcode, messageLength);
         // Set FIN to 1
         // headers[0] = (byte) (headers[0] | 0b10000000);
 
