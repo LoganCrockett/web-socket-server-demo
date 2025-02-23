@@ -22,7 +22,7 @@ static class DataFrame
         int messageLength = payloadBytes.Length;
         byte[] headers = GenerateHeaders(Opcode.TEXT, messageLength);
         // Set FIN to 1
-        headers[0] = (byte) (headers[0] | 0b10000000);
+        // headers[0] = (byte) (headers[0] | 0b10000000);
 
         //Console.WriteLine(messageLength);
         //Console.WriteLine(headers[1]);

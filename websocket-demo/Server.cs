@@ -94,10 +94,32 @@ class Server {
                     Console.WriteLine("{0}", text);
 
                     // Begin writing response
-                    string toSend = "Hello from Server here is something that is hopefully 126 characters longHello from Server here is something that is hopefully longer and I will continue to write";
-                    byte[] dataFrame = DataFrame.GeneratePayload(toSend);
-                    stream.WriteAsync(dataFrame, 0, dataFrame.Length);
-                    Console.WriteLine("Wrote to client");
+                    //string toSend = "Hello from Server here is something that is hopefully 126 characters longHello from Server here is something that is hopefully longer and I will continue to write";
+                    //byte[] dataFrame = DataFrame.GeneratePayload(toSend);
+                    //stream.WriteAsync(dataFrame, 0, dataFrame.Length);
+                    //Console.WriteLine("Wrote to client");
+                    using (StreamReader sr = File.OpenText(Path.Combine(Environment.CurrentDirectory, "D:\\web-socket-server-demo\\websocket-demo\\testText.txt")))
+                    {
+                        while (!sr.EndOfStream)
+                        {
+#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
+                            String line = sr.ReadLine();
+                            if (line != null)
+                            {
+                                byte[] dataFrame = DataFrame.GeneratePayload(line);
+                                // Set FIN to 1
+                                dataFrame[0] = (byte)(dataFrame[0] | 0b10000000);
+                                // Currently client implementation doesn't support split frames; for now, mark all frames as finished
+                                //if (sr.EndOfStream)
+                                //{
+                                //    // Set FIN to 1
+                                //    dataFrame[0] = (byte)(dataFrame[0] | 0b10000000);
+                                //}
+                                stream.WriteAsync(dataFrame);
+                            }
+                        }
+                    }
+                    
                 }
                 else {
                     Console.WriteLine("Mask Bit not set");
