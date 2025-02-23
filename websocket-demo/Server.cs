@@ -3,11 +3,15 @@ using System.Net;
 using System;
 using System.Text;
 using System.Text.RegularExpressions;
+using websocket_demo;
 
 // Folows the demo at https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_server
 class Server {
     private const String SERVER_IP_ADDRESS = "127.0.0.1";
     private const int SERVER_PORT = 80;
+    private const byte FIN_MASK = 0b10000000;
+    private const byte MASK_MASK = 0b10000000;
+    private const byte OPCODE_MASK = 0b00001111;
     public static void Main(String[] args) {
         TcpListener server = new TcpListener(IPAddress.Parse(SERVER_IP_ADDRESS), SERVER_PORT);
 
@@ -27,8 +31,9 @@ class Server {
 
         NetworkStream stream = client.GetStream();
 
-        // enter infinite loop to be able to handle every change in stream  
-        while (true) {
+        // enter infinite loop to be able to handle every change in stream
+        bool connectionIsOpen = true;
+        while (connectionIsOpen) {
             while (!stream.DataAvailable);
             // while (client.Available < 3);
             
@@ -59,9 +64,9 @@ class Server {
             else {
                 Console.WriteLine("Begin message decoding");
                 // Decode the message
-                bool fin = (bytes[0] & 0b10000000) != 0;
-                bool mask = (bytes[1] & 0b10000000) != 0; // Must be true, all messages from the client have to have this bit set
-                int opcode = bytes[0] & 0b00001111; // expecting 1 - text message
+                bool fin = (bytes[0] & FIN_MASK) != 0;
+                bool mask = (bytes[1] & MASK_MASK) != 0; // Must be true, all messages from the client have to have this bit set
+                int opcode = bytes[0] & OPCODE_MASK;
                 ulong offset = 2;
                 ulong msglen = bytes[1] & (ulong)0b01111111;
 
@@ -79,7 +84,17 @@ class Server {
                 }
 
                 if (msglen == 0) {
-                    Console.WriteLine("Message Len is zero");
+                    if ((byte) opcode == ((byte)Opcode.CLOSE & OPCODE_MASK))
+                    {
+                        Console.WriteLine("Received CLOSE Frame. Closing connection");
+                        byte[] closeFrame = DataFrame.GenerateCloseFrame();
+                        stream.WriteAsync(closeFrame, 0, closeFrame.Length);
+                        connectionIsOpen = false;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Message Len is zero");
+                    }
                 }
                 else if (mask) {
                     byte[] decoded = new byte[msglen];
@@ -128,5 +143,8 @@ class Server {
                 Console.WriteLine();
             }
         }
+
+        stream.Close();
+        return;
     }
 }

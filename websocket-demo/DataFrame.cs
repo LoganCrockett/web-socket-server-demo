@@ -1,14 +1,10 @@
 using System;
 using System.Text;
+using websocket_demo;
 
 // Websocket DataFrame
 static class DataFrame
 {
-    public enum Opcode : byte
-    {
-        TEXT = 0b00000001
-    }
-
     /*
      * See the following for good examples of what I'm doing here
      * https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API/Writing_WebSocket_servers#exchanging_data_frames
@@ -34,6 +30,11 @@ static class DataFrame
         //}
 
         return combineArrays(headers, payloadBytes);
+    }
+
+    public static byte[] GenerateCloseFrame()
+    {
+        return GenerateHeaders(Opcode.CLOSE, 0);
     }
 
     private static byte[] GenerateHeaders(Opcode opcode, int messageLength)

@@ -20,18 +20,24 @@
   <body>
     <h2>WebSocket Test</h2>
     <textarea cols="60" rows="6"></textarea>
-    <button>send</button>
+    <button id="connectButton">Connect</button>
+    <button id="send">send</button>
+    <button id="disconnectButton">Disconnect</button>
     <div id="output"></div>
   </body>
   <script>
     // http://www.websocket.org/echo.html
-    const button = document.querySelector("button");
+    const button = document.querySelector("#send");
+    const connectButton = document.querySelector("#connectButton");
+    const disconnectButton = document.querySelector("#disconnectButton");
     const output = document.querySelector("#output");
     const textarea = document.querySelector("textarea");
     const wsUri = "ws://127.0.0.1/socket";
-    const websocket = new WebSocket(wsUri);
+    let websocket = new WebSocket(wsUri);
 
     button.addEventListener("click", onClickButton);
+    disconnectButton.addEventListener("click", disconnect);
+    connectButton.addEventListener("click", connect);
 
     websocket.onopen = (e) => {
       writeToScreen("CONNECTED");
@@ -59,6 +65,16 @@
 
     function writeToScreen(message) {
       output.insertAdjacentHTML("afterbegin", `<p>${message}</p>`);
+      }
+
+    function connect() {
+        if (websocket.readyState === WebSocket.CLOSED) {
+            websocket = new WebSocket(wsUri);
+            writeToScreen("CONNECTED TO SERVER");
+        }
+        else {
+            writeToScreen("ALREADY CONNECTED");
+        }
     }
 
     function onClickButton() {
@@ -67,6 +83,19 @@
       text && doSend(text);
       textarea.value = "";
       textarea.focus();
+      }
+
+      function disconnect() {
+          if (websocket.readyState === WebSocket.CLOSING) {
+              writeToScreen("DISCONNECT IN PROGRESS")
+          }
+          else if (websocket.readyState !== WebSocket.CLOSED) {
+              writeToScreen("DISCONNECTING");
+              websocket.close();
+          }
+          else {
+              writeToScreen("ALREADY DISCONNECTED");
+          }
     }
   </script>
 </html>
